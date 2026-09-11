@@ -54,7 +54,7 @@ function Index() {
                 Help when minutes matter.
               </h1>
               <p className="mt-5 text-lg text-muted-foreground leading-relaxed max-w-lg">
-                LifeLine replaces frantic WhatsApp appeals with a structured, verified, transparent way to fund urgent medical care.
+                LifeLine replaces frantic appeals with a structured, verified, transparent way to fund urgent medical care.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link to="/create" className="inline-flex items-center justify-center h-11 px-6 rounded-lg bg-primary text-primary-foreground font-semibold shadow-soft hover:opacity-90 transition">
@@ -88,7 +88,7 @@ function Index() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-10">
           <Step n={1} title="Create campaign" body="Add patient details, medical condition, and goal in under 5 minutes." />
           <Step n={2} title="Get verified" body="Upload medical proof. Our team reviews within 24 hours and adds a trust badge." />
-          <Step n={3} title="Share widely" body="One link works on WhatsApp, social, and SMS — with rich previews." />
+          <Step n={3} title="Share widely" body="One link works on pp, social, and SMS — with rich previews." />
           <Step n={4} title="Receive funds" body="Donations flow to your verified payout account once approved." />
         </div>
       </section>

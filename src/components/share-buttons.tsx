@@ -64,7 +64,7 @@ ${c.story.slice(0, 240)}${c.story.length > 240 ? "…" : ""}
         Share campaign
       </button>
       <div className="grid grid-cols-3 gap-2">
-        <a target="_blank" rel="noopener noreferrer" href={waHref} className="h-10 rounded-lg border border-border hover:bg-muted text-xs font-medium grid place-items-center">WhatsApp</a>
+        <a target="_blank" rel="noopener noreferrer" href={waHref} className="h-10 rounded-lg border border-border hover:bg-muted text-xs font-medium grid place-items-center">Whatsapp</a>
         <a target="_blank" rel="noopener noreferrer" href={twHref} className="h-10 rounded-lg border border-border hover:bg-muted text-xs font-medium grid place-items-center">X / Twitter</a>
         <a target="_blank" rel="noopener noreferrer" href={tgHref} className="h-10 rounded-lg border border-border hover:bg-muted text-xs font-medium grid place-items-center">Telegram</a>
         <a target="_blank" rel="noopener noreferrer" href={fbHref} className="h-10 rounded-lg border border-border hover:bg-muted text-xs font-medium grid place-items-center">Facebook</a>

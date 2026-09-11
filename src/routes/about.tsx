@@ -16,14 +16,14 @@ function About() {
       <p className="text-xs uppercase tracking-wider text-primary font-semibold">About LifeLine</p>
       <h1 className="font-display text-4xl md:text-5xl font-bold mt-3 text-balance">A trusted infrastructure for critical medical moments.</h1>
       <p className="text-lg text-muted-foreground mt-5 leading-relaxed">
-        LifeLine was built to replace the chaotic, unverifiable WhatsApp appeals families rely on during medical emergencies. We provide structure, verification, and transparency so that help arrives faster — and donors can trust where their money goes.
+        LifeLine was built to replace the chaotic, unverifiable appeals families rely on during medical emergencies. We provide structure, verification, and transparency so that help arrives faster — and donors can trust where their money goes.
       </p>
 
       <div className="grid sm:grid-cols-2 gap-5 mt-12">
         {[
           { t: "Verification first", d: "Every campaign is reviewed by humans against medical records and hospital partnerships before going live." },
           { t: "Transparent flow", d: "Donors see exactly how much has been raised, who donated, and how funds are being used." },
-          { t: "Built for mobile", d: "Optimized for low-bandwidth networks and WhatsApp-first sharing across Africa." },
+          { t: "Built for mobile", d: "Optimized for low-bandwidth networks and pp-first sharing across Africa." },
           { t: "Local payments", d: "Native integrations with Paystack and Flutterwave — cards, transfers, mobile money, and USSD." },
         ].map((b) => (
           <div key={b.t} className="bg-card border border-border rounded-2xl p-6">

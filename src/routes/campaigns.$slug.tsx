@@ -1,271 +1,130 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { campaignsApi } from "@/lib/api/campaigns";
-import { ApiError } from "@/lib/api/client";
-import { RoleGuard } from "@/components/role-guard";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { cn } from "@/lib/utils";
+import { donationsApi } from "@/lib/api/donations";
+import { ProgressBar, VerifiedBadge } from "@/components/campaign-card";
+import { ShareButtons } from "@/components/share-buttons";
+import { Loading, ErrorBox } from "@/components/loading";
+import { fmtDate, fmtMoney } from "@/lib/format";
 
 export const Route = createFileRoute("/campaigns/$slug")({
-  component: () => (
-    <RoleGuard roles={["CampaignCreator", "Organization", "SuperAdmin"]}>
-      <CreatePage />
-    </RoleGuard>
-  ),
-  head: () => ({ meta: [{ title: "Start a fundraiser — LifeLine" }] }),
+  component: CampaignDetail,
+  head: ({ params }) => ({ meta: [{ title: `Campaign · ${params.slug} — LifeLine` }] }),
 });
 
-function CreatePage() {
+function CampaignDetail() {
+  const { slug } = Route.useParams();
   const navigate = useNavigate();
-  const qc = useQueryClient();
 
-  const [form, setForm] = useState({
-    title: "",
-    patientName: "",
-    medicalCondition: "",
-    story: "",
-    goalAmount: "",
-    surgeryDate: "",
-    bankCode: "",
-    accountNumber: "",
-    accountName: "",
+  const campaignQ = useQuery({
+    queryKey: ["campaign", slug],
+    queryFn: () => campaignsApi.bySlug(slug),
   });
-  const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [docs, setDocs] = useState<Array<{ file: File; type: "hospital_bill" | "medical_report" | "doctor_letter" | "other" }>>([]);
-  const [busy, setBusy] = useState(false);
-  const [bankOpen, setBankOpen] = useState(false);
+  const c = campaignQ.data;
 
-  // Track already-created campaign so retrying Submit after an upload
-  // timeout doesn't create a duplicate campaign in the database.
-  const [createdCampaignId, setCreatedCampaignId] = useState<string | null>(null);
-  const [createdCampaignSlug, setCreatedCampaignSlug] = useState<string | null>(null);
-
-  const { data: banks = [], isLoading: banksLoading } = useQuery({
-    queryKey: ["banks"],
-    queryFn: () => campaignsApi.banks(),
-    staleTime: 1000 * 60 * 60,
+  const updatesQ = useQuery({
+    queryKey: ["campaign", c?.id, "updates"],
+    queryFn: () => campaignsApi.listUpdates(c!.id),
+    enabled: !!c?.id,
   });
-  const selectedBank = useMemo(() => banks.find((b) => b.code === form.bankCode), [banks, form.bankCode]);
-
-  const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
-    setForm((f) => ({ ...f, [k]: v }));
-
-  const submit = useMutation({
-    mutationFn: async () => {
-      setBusy(true);
-
-      // If the campaign was already created in a previous attempt (upload
-      // timed out), skip creation and only retry the uploads.
-      let id = createdCampaignId;
-      let slug = createdCampaignSlug;
-
-      if (!id || !slug) {
-        const created = await campaignsApi.create({
-          title: form.title,
-          patientName: form.patientName,
-          medicalCondition: form.medicalCondition,
-          story: form.story,
-          goalAmount: Number(Number(form.goalAmount || 0).toFixed(2)),
-          surgeryDate: form.surgeryDate || undefined,
-          bankCode: form.bankCode,
-          accountNumber: form.accountNumber,
-          accountName: form.accountName,
-        });
-        id = created.id;
-        slug = created.slug;
-        setCreatedCampaignId(id);
-        setCreatedCampaignSlug(slug);
-      }
-
-      if (coverFile) await campaignsApi.uploadCoverImage(id, coverFile);
-      for (const d of docs) await campaignsApi.uploadDocument(id, d.file, d.type);
-
-      return { id, slug };
-    },
-    onSuccess: ({ slug }) => {
-      // Clear stored IDs so the form is clean for a future campaign
-      setCreatedCampaignId(null);
-      setCreatedCampaignSlug(null);
-      qc.invalidateQueries({ queryKey: ["campaigns"] });
-      toast.success("Campaign created. It is now pending verification.");
-      navigate({ to: "/campaigns/$slug", params: { slug } });
-    },
-    onError: (err: unknown) => {
-      const m = err instanceof ApiError ? err.message : "Could not create campaign.";
-      toast.error(m);
-      if (err instanceof ApiError && err.fieldErrors?.length) {
-        err.fieldErrors.forEach((e) => toast.error(e));
-      }
-      // Intentionally do NOT clear createdCampaignId/Slug here —
-      // the next Submit attempt must retry only the upload, not re-create.
-    },
-    onSettled: () => setBusy(false),
+  const donationsQ = useQuery({
+    queryKey: ["campaign", c?.id, "donations"],
+    queryFn: () => donationsApi.forCampaign(c!.id),
+    enabled: !!c?.id,
   });
 
-  return (
-    <div className="container-page py-12 max-w-3xl">
-      <h1 className="font-display text-3xl font-bold">Start a fundraiser</h1>
-      <p className="text-muted-foreground mt-2">Verification typically completes within 24 hours.</p>
-
-      <form
-        onSubmit={(e) => { e.preventDefault(); submit.mutate(); }}
-        className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-soft mt-6 space-y-5"
-      >
-        <Field label="Campaign title" hint="10–150 characters">
-          <input required minLength={10} maxLength={150} className={inputCls} value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="Help Amaka through open-heart surgery" />
-        </Field>
-
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Field label="Patient full name">
-            <input required maxLength={100} className={inputCls} value={form.patientName} onChange={(e) => set("patientName", e.target.value)} />
-          </Field>
-          <Field label="Medical condition" hint="Max 200 characters">
-            <input required maxLength={200} className={inputCls} value={form.medicalCondition} onChange={(e) => set("medicalCondition", e.target.value)} />
-          </Field>
-        </div>
-
-        <Field label="Story" hint="10–5,000 characters">
-          <textarea required minLength={10} maxLength={5000} rows={6} className={inputCls + " resize-y"} value={form.story} onChange={(e) => set("story", e.target.value)} />
-        </Field>
-
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Field label="Goal amount (₦)" hint="Min ₦1,000 · Max ₦100,000,000">
-            <input required type="number" min={1000} max={100000000} className={inputCls} value={form.goalAmount} onChange={(e) => set("goalAmount", e.target.value as never)} placeholder="e.g. 500000" />
-          </Field>
-          <Field label="Surgery date (optional)">
-            <input type="date" className={inputCls} value={form.surgeryDate} onChange={(e) => set("surgeryDate", e.target.value)} />
-          </Field>
-        </div>
-
-        <div className="border-t border-border pt-5">
-          <h2 className="font-semibold text-sm mb-3">Payout bank account</h2>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="Bank name">
-              <Popover open={bankOpen} onOpenChange={setBankOpen}>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    role="combobox"
-                    aria-expanded={bankOpen}
-                    className={cn(inputCls, "flex items-center justify-between text-left")}
-                    disabled={banksLoading}
-                  >
-                    <span className={cn("truncate", !selectedBank && "text-muted-foreground")}>
-                      {selectedBank ? selectedBank.name : banksLoading ? "Loading banks…" : "Select bank"}
-                    </span>
-                    <ChevronsUpDown className="h-4 w-4 opacity-50 shrink-0 ml-2" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" align="start">
-                  <Command
-                    filter={(value, search) =>
-                      value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0
-                    }
-                  >
-                    <CommandInput placeholder="Search bank…" />
-                    <CommandList>
-                      <CommandEmpty>No bank found.</CommandEmpty>
-                      <CommandGroup>
-                        {banks.map((b) => (
-                          <CommandItem
-                            key={b.code}
-                            value={b.name}
-                            onSelect={() => {
-                              set("bankCode", b.code);
-                              setBankOpen(false);
-                            }}
-                          >
-                            <Check className={cn("mr-2 h-4 w-4", form.bankCode === b.code ? "opacity-100" : "opacity-0")} />
-                            {b.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              {/* Native required validation via a hidden input */}
-              <input tabIndex={-1} aria-hidden className="sr-only" required value={form.bankCode} onChange={() => {}} />
-            </Field>
-            <Field label="Account number" hint="10 digits">
-              <input required pattern="\d{10}" maxLength={10} className={inputCls} value={form.accountNumber} onChange={(e) => set("accountNumber", e.target.value.replace(/\D/g, ""))} />
-            </Field>
-          </div>
-          <div className="mt-4">
-            <Field label="Account name">
-              <input required maxLength={100} className={inputCls} value={form.accountName} onChange={(e) => set("accountName", e.target.value)} />
-            </Field>
-          </div>
-        </div>
-
-        <div className="border-t border-border pt-5">
-          <h2 className="font-semibold text-sm mb-3">Cover image (optional)</h2>
-          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="text-sm" />
-          {coverFile && <p className="text-xs text-muted-foreground mt-1">{coverFile.name}</p>}
-          <p className="text-xs text-muted-foreground mt-1">Max 5MB. JPG, PNG, or WebP.</p>
-        </div>
-
-        <div className="border-t border-border pt-5">
-          <h2 className="font-semibold text-sm mb-3">Medical documents (optional)</h2>
-          <p className="text-xs text-muted-foreground mb-3">PDF / JPG / PNG up to 10MB each. These speed up verification.</p>
-          <div className="space-y-2">
-            {docs.map((d, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm">
-                <span className="flex-1 truncate">{d.file.name}</span>
-                <select
-                  value={d.type}
-                  onChange={(e) => setDocs((arr) => arr.map((x, j) => (j === i ? { ...x, type: e.target.value as typeof d.type } : x)))}
-                  className="h-9 px-2 rounded-md border border-border bg-background text-xs"
-                >
-                  <option value="hospital_bill">Hospital bill</option>
-                  <option value="medical_report">Medical report</option>
-                  <option value="doctor_letter">Doctor letter</option>
-                  <option value="other">Other</option>
-                </select>
-                <button type="button" onClick={() => setDocs((arr) => arr.filter((_, j) => j !== i))} className="text-xs text-destructive">Remove</button>
-              </div>
-            ))}
-          </div>
-          <label className="mt-3 inline-block">
-            <span className="h-9 px-3 inline-flex items-center rounded-md border border-border bg-background text-xs font-medium cursor-pointer hover:bg-muted">+ Add document</span>
-            <input
-              type="file"
-              accept="application/pdf,image/jpeg,image/png"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) setDocs((arr) => [...arr, { file: f, type: "hospital_bill" }]);
-                e.target.value = "";
-              }}
-            />
-          </label>
-        </div>
-
-        <div className="flex justify-between items-center pt-4">
-          <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">Cancel</Link>
-          <button disabled={busy || submit.isPending} className="h-11 px-6 rounded-lg bg-primary text-primary-foreground font-semibold disabled:opacity-50">
-            {busy || submit.isPending ? "Submitting…" : "Submit for verification"}
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-}
-
-const inputCls = "w-full h-11 px-3 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-ring text-sm";
-
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">{label}</span>
-        {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+  if (campaignQ.isLoading) return <div className="container-page py-12"><Loading /></div>;
+  if (campaignQ.error || !c)
+    return (
+      <div className="container-page py-12">
+        <ErrorBox message="Campaign not found." retry={campaignQ.refetch} />
       </div>
-      <div className="mt-1.5">{children}</div>
-    </label>
+    );
+
+  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+
+  return (
+    <div className="container-page py-10">
+      <Link to="/campaigns" className="text-sm text-muted-foreground hover:text-foreground">← All campaigns</Link>
+
+      <div className="grid lg:grid-cols-3 gap-8 mt-4">
+        <div className="lg:col-span-2 space-y-8">
+          <div>
+            <div className="flex items-center gap-3 flex-wrap mb-3">
+              <VerifiedBadge status={c.status} />
+              <span className="text-sm text-muted-foreground">by {c.creatorName}</span>
+            </div>
+            <h1 className="font-display text-3xl md:text-4xl font-bold">{c.title}</h1>
+            <p className="text-muted-foreground mt-2">{c.patientName} · {c.medicalCondition}</p>
+          </div>
+
+          {c.coverImageUrl && (
+            <img src={c.coverImageUrl} alt={c.patientName} className="w-full aspect-[16/9] rounded-2xl object-cover border border-border" />
+          )}
+
+          <section className="bg-card border border-border rounded-2xl p-6">
+            <h2 className="font-semibold text-lg mb-3">Story</h2>
+            <p className="whitespace-pre-line leading-relaxed text-sm text-foreground/90">{c.story}</p>
+          </section>
+
+          <section className="bg-card border border-border rounded-2xl p-6">
+            <h2 className="font-semibold text-lg mb-3">Updates ({updatesQ.data?.length ?? 0})</h2>
+            {updatesQ.isLoading && <Loading label="Loading updates…" />}
+            {updatesQ.data?.length === 0 && <p className="text-sm text-muted-foreground">No updates yet.</p>}
+            <ul className="space-y-4">
+              {updatesQ.data?.map((u) => (
+                <li key={u.id} className="border-l-2 border-primary/30 pl-4">
+                  <div className="text-xs text-muted-foreground">{fmtDate(u.postedAt)}</div>
+                  <h3 className="font-semibold">{u.title}</h3>
+                  <p className="text-sm text-muted-foreground mt-1 whitespace-pre-line">{u.content}</p>
+                  {u.imageUrl && <img src={u.imageUrl} alt="" className="mt-3 rounded-lg max-h-64 object-cover" />}
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="bg-card border border-border rounded-2xl p-6">
+            <h2 className="font-semibold text-lg mb-3">Recent donations ({donationsQ.data?.length ?? 0})</h2>
+            {donationsQ.isLoading && <Loading label="Loading donations…" />}
+            {donationsQ.data?.length === 0 && <p className="text-sm text-muted-foreground">Be the first to donate.</p>}
+            <ul className="space-y-3">
+              {donationsQ.data?.filter((d) => d.isVerified).map((d) => (
+                <li key={d.id} className="flex items-start justify-between gap-3 bg-surface rounded-lg p-3">
+                  <div>
+                    <div className="text-sm font-medium">{d.donorName}</div>
+                    {d.message && <div className="text-xs text-muted-foreground mt-0.5">{d.message}</div>}
+                  </div>
+                  <div className="text-sm font-semibold text-primary whitespace-nowrap">{fmtMoney(d.amount)}</div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+
+        <aside className="space-y-4">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-soft sticky top-20">
+            <ProgressBar value={c.amountRaised} goal={c.goalAmount} />
+            <div className="mt-2 text-xs text-muted-foreground">{c.donorCount} donors</div>
+            <button
+              disabled={c.status !== "Verified"}
+              onClick={() => navigate({ to: "/donate/$slug", params: { slug: c.slug } })}
+              className="w-full mt-5 h-12 rounded-lg bg-primary text-primary-foreground font-semibold disabled:opacity-50 hover:opacity-90 transition"
+            >
+              {c.status === "Verified" ? "Donate now" : "Awaiting verification"}
+            </button>
+            {c.surgeryDate && (
+              <p className="text-xs text-muted-foreground mt-3">
+                Surgery scheduled <span className="font-medium text-foreground">{fmtDate(c.surgeryDate)}</span>
+              </p>
+            )}
+          </div>
+
+          <div className="bg-card border border-border rounded-2xl p-6">
+            <h3 className="font-semibold text-sm mb-3">Share this campaign</h3>
+            <ShareButtons campaign={c} shareUrl={shareUrl} />
+          </div>
+        </aside>
+      </div>
+    </div>
   );
 }
