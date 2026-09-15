@@ -4,4 +4,8 @@
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/server.ts",
+  "vars": {
+    "Paystack__CallbackUrl": "https://lifelineux.med-lifeline-supports.workers.dev/donate/callback",
+    "VITE_API_BASE_URL": "https://lifeline-8cf6.onrender.com/api"
+  }
 }
