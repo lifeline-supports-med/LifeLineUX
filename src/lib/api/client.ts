@@ -31,9 +31,11 @@ export class ApiError extends Error {
   }
 }
 
-const baseURL =
-  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_API_BASE_URL) ||
-  "https://localhost:44325/api";
+const baseURL = import.meta.env.VITE_API_BASE_URL;
+
+if (!baseURL) {
+  throw new Error("VITE_API_BASE_URL is not configured.");
+}
 
 export const http: AxiosInstance = axios.create({
   baseURL,
