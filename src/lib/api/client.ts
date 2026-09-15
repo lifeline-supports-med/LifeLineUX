@@ -31,11 +31,9 @@ export class ApiError extends Error {
   }
 }
 
-const baseURL = import.meta.env.VITE_API_BASE_URL;
-
-if (!baseURL) {
-  throw new Error("VITE_API_BASE_URL is not configured.");
-}
+const baseURL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://lifeline-8cf6.onrender.com/api";
 
 export const http: AxiosInstance = axios.create({
   baseURL,
