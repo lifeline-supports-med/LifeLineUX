@@ -136,7 +136,7 @@ export function Footer() {
         <div>
           <h4 className="font-semibold mb-3 text-sm">Contact</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>support@lifeline.health</li>
+            <li>med.lifeline.supports@gmail.com</li>
             <li>Lagos · Kano · Africa</li>
           </ul>
         </div>
