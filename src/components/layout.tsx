@@ -137,14 +137,14 @@ export function Footer() {
           <h4 className="font-semibold mb-3 text-sm">Contact</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>support@lifeline.health</li>
-            <li>Lagos · Accra · Nairobi</li>
+            <li>Lagos · Kano · Africa</li>
           </ul>
         </div>
       </div>
       <div className="border-t border-border">
         <div className="container-page py-5 text-xs text-muted-foreground flex flex-wrap justify-between gap-2">
           <span>© 2026 LifeLine. All rights reserved.</span>
-          <span>Built with care for emergency moments.</span>
+          <span>For emergency moments.</span>
         </div>
       </div>
     </footer>
