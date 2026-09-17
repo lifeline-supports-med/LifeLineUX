@@ -37,7 +37,7 @@ function SignupPage() {
   return (
     <AuthCard
       title="Create your LifeLine account"
-      subtitle="Sign up as a Campaign Creator. Admins can change your role later."
+      subtitle="Sign up to get started with LifeLine and access our services."
       footer={<>Already have an account? <Link to="/login" className="text-primary font-medium hover:underline">Sign in</Link></>}
     >
       <form onSubmit={submit} className="space-y-4">
