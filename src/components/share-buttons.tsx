@@ -8,17 +8,19 @@ interface ShareButtonsProps {
   shareUrl: string;
 }
 
-export function ShareButtons({ campaign: c, shareUrl }: ShareButtonsProps) {
+export function ShareButtons({ campaign: c, shareUrl: campaignUrl }: ShareButtonsProps) {
   const [downloading, setDownloading] = useState(false);
+  const donationUrl = campaignUrl
+    ? new URL(`/donate/${encodeURIComponent(c.slug)}`, campaignUrl).toString()
+    : "";
 
-  const shareText = `🚨 Help ${c.patientName} — ${c.medicalCondition}
+  const shareText = `Help ${c.patientName} with ${c.medicalCondition}.
 🎯 Goal: ${fmtMoney(c.goalAmount)}  ·  Raised: ${fmtMoney(c.amountRaised)} (${c.donorCount} donors)
 
 ${c.story.slice(0, 240)}${c.story.length > 240 ? "…" : ""}
 
-👉 Donate / verify on LifeLine: ${shareUrl}
-
 #LifeLine #MedicalEmergency`;
+  const shareCaption = `${shareText}\n\n👉 Donate securely on LifeLine: ${donationUrl}`;
 
   // image URL → File blob (for native share)
   const imageToFile = async (): Promise<File | null> => {
@@ -34,7 +36,7 @@ ${c.story.slice(0, 240)}${c.story.length > 240 ? "…" : ""}
 
   const copyCaption = async () => {
     try {
-      await navigator.clipboard.writeText(shareText);
+      await navigator.clipboard.writeText(shareCaption);
       toast.success("Caption copied — paste it anywhere");
     } catch {
       toast.error("Couldn't copy caption");
@@ -43,7 +45,7 @@ ${c.story.slice(0, 240)}${c.story.length > 240 ? "…" : ""}
 
   const copyLink = async () => {
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(donationUrl);
       toast.success("Link copied");
     } catch {
       toast.error("Couldn't copy link");
@@ -54,7 +56,11 @@ ${c.story.slice(0, 240)}${c.story.length > 240 ? "…" : ""}
   const shareWithImage = async () => {
     try {
       const file = await imageToFile();
-      const payload: ShareData = { title: `Help ${c.patientName}`, text: shareText, url: shareUrl };
+      const payload: ShareData = {
+        title: `Help ${c.patientName}`,
+        text: shareText,
+        url: donationUrl,
+      };
 
       if (file && navigator.canShare?.({ files: [file] })) {
         (payload as ShareData & { files: File[] }).files = [file];
@@ -99,11 +105,11 @@ ${c.story.slice(0, 240)}${c.story.length > 240 ? "…" : ""}
     }
   };
 
-  const waHref = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
-  const twHref = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
-  const fbHref = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
-  const tgHref = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
-  const mailHref = `mailto:?subject=${encodeURIComponent(`Help ${c.patientName}`)}&body=${encodeURIComponent(shareText)}`;
+  const waHref = `https://wa.me/?text=${encodeURIComponent(shareCaption)}`;
+  const twHref = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(donationUrl)}`;
+  const fbHref = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(donationUrl)}&quote=${encodeURIComponent(shareText)}`;
+  const tgHref = `https://t.me/share/url?url=${encodeURIComponent(donationUrl)}&text=${encodeURIComponent(shareText)}`;
+  const mailHref = `mailto:?subject=${encodeURIComponent(`Help ${c.patientName}`)}&body=${encodeURIComponent(shareCaption)}`;
 
   const platformBtn =
     "h-10 rounded-lg border border-border hover:bg-muted text-xs font-medium grid place-items-center transition";
@@ -115,7 +121,7 @@ ${c.story.slice(0, 240)}${c.story.length > 240 ? "…" : ""}
         Share campaign
       </button>
       <button onClick={downloadImage} disabled={downloading} className="w-full h-10 rounded-lg border border-border hover:bg-muted text-xs font-medium disabled:opacity-50 transition">
-        {downloading ? "Downloading…" : "Download image"}
+        {downloading ? "Downloading…" : "Download campaign image"}
       </button>
 
       {/* Choose where to share */}
@@ -127,17 +133,15 @@ ${c.story.slice(0, 240)}${c.story.length > 240 ? "…" : ""}
           <a target="_blank" rel="noopener noreferrer" href={tgHref} className={platformBtn}>Telegram</a>
           <a target="_blank" rel="noopener noreferrer" href={fbHref} className={platformBtn}>Facebook</a>
           <a href={mailHref} className={platformBtn}>Email</a>
-          <button onClick={copyLink} className={platformBtn}>Copy link</button>
+          <button onClick={copyLink} className={platformBtn}>Copy donation link</button>
         </div>
       </div>
 
       <button onClick={copyCaption} className="w-full h-10 rounded-lg border border-border hover:bg-muted text-xs font-medium transition">
-        Copy caption
+        Copy share message
       </button>
 
-      <p className="text-[11px] text-muted-foreground leading-snug">
-        If the image downloads instead of sharing, upload it on your platform and paste the copied caption.
-      </p>
+      <p className="text-[11px] text-muted-foreground leading-snug">Share the campaign image with the caption and direct donation link.</p>
     </div>
   );
 }

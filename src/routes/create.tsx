@@ -112,7 +112,18 @@ function CreatePage() {
       <p className="text-muted-foreground mt-2">Verification typically completes within 24 hours.</p>
 
       <form
-        onSubmit={(e) => { e.preventDefault(); submit.mutate(); }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!coverFile) {
+            toast.error("Please add a cover image.");
+            return;
+          }
+          if (docs.length === 0) {
+            toast.error("Please add at least one medical supporting document.");
+            return;
+          }
+          submit.mutate();
+        }}
         className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-soft mt-6 space-y-5"
       >
         <Field label="Campaign title" hint="10–150 characters">
@@ -203,15 +214,15 @@ function CreatePage() {
         </div>
 
         <div className="border-t border-border pt-5">
-          <h2 className="font-semibold text-sm mb-3">Cover image (optional)</h2>
-          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="text-sm" />
+          <h2 className="font-semibold text-sm mb-3">Cover image (required)</h2>
+          <input required type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="text-sm" />
           {coverFile && <p className="text-xs text-muted-foreground mt-1">{coverFile.name}</p>}
           <p className="text-xs text-muted-foreground mt-1">Max 5MB. JPG, PNG, or WebP.</p>
         </div>
 
         <div className="border-t border-border pt-5">
-          <h2 className="font-semibold text-sm mb-3">Medical documents (optional)</h2>
-          <p className="text-xs text-muted-foreground mb-3">PDF / JPG / PNG up to 10MB each. These speed up verification.</p>
+          <h2 className="font-semibold text-sm mb-3">Medical supporting document (required)</h2>
+          <p className="text-xs text-muted-foreground mb-3">At least one medical report, hospital bill, or other supporting document is required. PDF / JPG / PNG up to 10MB each.</p>
           <div className="space-y-2">
             {docs.map((d, i) => (
               <div key={i} className="flex items-center gap-2 text-sm">
