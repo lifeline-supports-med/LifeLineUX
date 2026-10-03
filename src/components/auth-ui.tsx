@@ -1,4 +1,5 @@
-import { type ReactNode } from "react";
+import { useState, type ComponentProps, type ReactNode } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 export function AuthCard({ title, subtitle, children, footer }: { title: string; subtitle?: string; children: ReactNode; footer?: ReactNode }) {
   return (
@@ -27,6 +28,29 @@ export function Field({ label, children, hint, error }: { label: string; childre
 
 export const inputCls =
   "w-full h-10 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition";
+
+export function PasswordInput(props: ComponentProps<"input">) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div className="relative">
+      <input
+        {...props}
+        type={visible ? "text" : "password"}
+        className={`${props.className ?? inputCls} pr-10`}
+      />
+      <button
+        type="button"
+        aria-label={visible ? "Hide password" : "Show password"}
+        aria-pressed={visible}
+        onClick={() => setVisible((current) => !current)}
+        className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-lg text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+      >
+        {visible ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+      </button>
+    </div>
+  );
+}
 
 export const btnPrimary =
   "w-full h-10 rounded-lg bg-primary text-primary-foreground font-semibold text-sm shadow-soft hover:opacity-90 transition disabled:opacity-60";

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { AuthCard, Field, inputCls, btnPrimary, FormError, FormSuccess } from "@/components/auth-ui";
+import { AuthCard, Field, inputCls, btnPrimary, FormError, FormSuccess, PasswordInput } from "@/components/auth-ui";
 
 export const Route = createFileRoute("/change-password")({
   head: () => ({ meta: [{ title: "Change password — LifeLine" }] }),
@@ -43,13 +43,13 @@ function ChangePage() {
         <FormError message={err} />
         <FormSuccess message={ok} />
         <Field label="Current password">
-          <input type="password" required className={inputCls} value={current} onChange={(e) => setCurrent(e.target.value)} />
+          <PasswordInput required className={inputCls} value={current} onChange={(e) => setCurrent(e.target.value)} />
         </Field>
         <Field label="New password" hint="At least 8 characters">
-          <input type="password" required className={inputCls} value={next} onChange={(e) => setNext(e.target.value)} />
+          <PasswordInput required className={inputCls} value={next} onChange={(e) => setNext(e.target.value)} />
         </Field>
         <Field label="Confirm new password">
-          <input type="password" required className={inputCls} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+          <PasswordInput required className={inputCls} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
         </Field>
         <button disabled={busy} className={btnPrimary}>{busy ? "Updating..." : "Update password"}</button>
       </form>

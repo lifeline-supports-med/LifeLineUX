@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth, ApiError } from "@/lib/auth";
-import { AuthCard, Field, inputCls, btnPrimary, FormError } from "@/components/auth-ui";
+import { AuthCard, Field, inputCls, btnPrimary, FormError, PasswordInput } from "@/components/auth-ui";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({ meta: [{ title: "Create your account — LifeLine" }] }),
@@ -57,10 +57,10 @@ function SignupPage() {
           <input required className={inputCls} value={form.phoneNumber} onChange={(e) => set("phoneNumber", e.target.value)} placeholder="+234 800 000 0000" />
         </Field>
         <Field label="Password" hint="Min 8 chars · upper + lower + number">
-          <input type="password" required minLength={8} className={inputCls} value={form.password} onChange={(e) => set("password", e.target.value)} />
+          <PasswordInput required minLength={8} className={inputCls} value={form.password} onChange={(e) => set("password", e.target.value)} />
         </Field>
         <Field label="Confirm password">
-          <input type="password" required className={inputCls} value={form.confirm} onChange={(e) => set("confirm", e.target.value)} />
+          <PasswordInput required className={inputCls} value={form.confirm} onChange={(e) => set("confirm", e.target.value)} />
         </Field>
         <button disabled={busy} className={btnPrimary}>{busy ? "Creating account..." : "Create account"}</button>
         <p className="text-xs text-muted-foreground text-center">By signing up, you agree to our terms and verification policy.</p>

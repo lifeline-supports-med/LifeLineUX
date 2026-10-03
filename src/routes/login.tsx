@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { AuthCard, Field, inputCls, btnPrimary, FormError } from "@/components/auth-ui";
+import { AuthCard, Field, inputCls, btnPrimary, FormError, PasswordInput } from "@/components/auth-ui";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Sign in — LifeLine" }, { name: "description", content: "Sign in to your LifeLine account." }] }),
@@ -35,7 +35,7 @@ function LoginPage() {
           <input type="email" required className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
         </Field>
         <Field label="Password">
-          <input type="password" required className={inputCls} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+          <PasswordInput required className={inputCls} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
         </Field>
         <div className="flex justify-end">
           <Link to="/forgot-password" className="text-xs text-primary hover:underline">Forgot password?</Link>
