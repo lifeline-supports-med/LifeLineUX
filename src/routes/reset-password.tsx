@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { AuthCard, Field, inputCls, btnPrimary, FormError } from "@/components/auth-ui";
+import { AuthCard, Field, inputCls, btnPrimary, FormError, PasswordInput } from "@/components/auth-ui";
 
 export const Route = createFileRoute("/reset-password")({
   component: ResetPage,
@@ -42,9 +42,18 @@ function ResetPage() {
     >
       <form onSubmit={submit} className="space-y-4">
         <FormError message={err} />
-        <Field label="Email"><input type="email" required className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
-        <Field label="Reset code"><input required className={inputCls} value={token} onChange={(e) => setToken(e.target.value)} /></Field>        <Field label="New password" hint="At least 8 characters"><input type="password" required className={inputCls} value={password} onChange={(e) => setPassword(e.target.value)} /></Field>
-        <Field label="Confirm password"><input type="password" required className={inputCls} value={confirm} onChange={(e) => setConfirm(e.target.value)} /></Field>
+        <Field label="Email">
+          <input type="email" required className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} />
+        </Field>
+        <Field label="Reset code">
+          <input required className={inputCls} value={token} onChange={(e) => setToken(e.target.value)} />
+        </Field>
+        <Field label="New password" hint="At least 8 characters">
+          <PasswordInput required className={inputCls} value={password} onChange={(e) => setPassword(e.target.value)} />
+        </Field>
+        <Field label="Confirm password">
+          <PasswordInput required className={inputCls} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+        </Field>
         <button disabled={busy} className={btnPrimary}>{busy ? "Resetting..." : "Reset password"}</button>
       </form>
     </AuthCard>
