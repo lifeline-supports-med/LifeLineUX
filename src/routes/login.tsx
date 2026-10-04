@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { AuthCard, Field, inputCls, btnPrimary, FormError, PasswordInput } from "@/components/auth-ui";
+import { GoogleAuthButton } from "@/components/google-auth-button";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Sign in — LifeLine" }, { name: "description", content: "Sign in to your LifeLine account." }] }),
@@ -9,18 +10,22 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const handleGoogleCredential = useCallback(async (idToken: string) => {
+    await loginWithGoogle(idToken);
+    navigate({ to: "/" });
+  }, [loginWithGoogle, navigate]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr(undefined); setBusy(true);
     try { await login(email, password); navigate({ to: "/" }); }
-    catch (e: any) { setErr(e.message); } finally { setBusy(false); }
+    catch (e: unknown) { setErr(e instanceof Error ? e.message : "Sign in failed."); } finally { setBusy(false); }
   };
 
   return (
@@ -42,6 +47,7 @@ function LoginPage() {
         </div>
         <button disabled={busy} className={btnPrimary}>{busy ? "Signing in..." : "Sign in"}</button>
       </form>
+      <GoogleAuthButton mode="signin_with" onCredential={handleGoogleCredential} />
     </AuthCard>
   );
 }

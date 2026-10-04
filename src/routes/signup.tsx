@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useAuth, ApiError } from "@/lib/auth";
 import { AuthCard, Field, inputCls, btnPrimary, FormError, PasswordInput } from "@/components/auth-ui";
+import { GoogleAuthButton } from "@/components/google-auth-button";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({ meta: [{ title: "Create your account — LifeLine" }] }),
@@ -9,7 +10,7 @@ export const Route = createFileRoute("/signup")({
 });
 
 function SignupPage() {
-  const { signup } = useAuth();
+  const { signup, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     firstName: "", lastName: "", email: "", phoneNumber: "", password: "", confirm: "",
@@ -17,6 +18,10 @@ function SignupPage() {
   const [err, setErr] = useState<string>();
   const [busy, setBusy] = useState(false);
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((f) => ({ ...f, [k]: v }));
+  const handleGoogleCredential = useCallback(async (idToken: string) => {
+    await loginWithGoogle(idToken);
+    navigate({ to: "/" });
+  }, [loginWithGoogle, navigate]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +70,7 @@ function SignupPage() {
         <button disabled={busy} className={btnPrimary}>{busy ? "Creating account..." : "Create account"}</button>
         <p className="text-xs text-muted-foreground text-center">By signing up, you agree to our terms and verification policy.</p>
       </form>
+      <GoogleAuthButton mode="signup_with" onCredential={handleGoogleCredential} />
     </AuthCard>
   );
 }
