@@ -88,7 +88,7 @@ function DonatePage() {
             onChange={(e) => setAmount((e.target.value))}
             className="mt-3 w-full h-12 px-4 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-ring text-lg font-semibold"
           />
-          <p className="text-xs text-muted-foreground mt-1">Minimum ₦200. ₦200 platform fee is split server-side.</p>
+          <p className="text-xs text-muted-foreground mt-1">Minimum ₦200. All transaction charges are covered by the platform.</p>
         </div>
 
         {!user && (
