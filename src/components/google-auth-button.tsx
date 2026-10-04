@@ -63,13 +63,12 @@ export function GoogleAuthButton({
   const onCredentialRef = useRef(onCredential);
   const [error, setError] = useState<string>();
   onCredentialRef.current = onCredential;
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
     let active = true;
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
     if (!clientId) {
-      setError("Google sign-in is not configured.");
       return () => {
         active = false;
       };
@@ -110,7 +109,9 @@ export function GoogleAuthButton({
     return () => {
       active = false;
     };
-  }, [mode]);
+  }, [clientId, mode]);
+
+  if (!clientId) return null;
 
   return (
     <div className="mt-4">
@@ -121,8 +122,8 @@ export function GoogleAuthButton({
       </div>
       <div ref={buttonRef} className="flex justify-center" />
       {error && (
-        <p role="alert" className="mt-2 text-center text-xs text-destructive">
-          {error}
+        <p role="alert" className="mt-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-center text-xs text-muted-foreground">
+          {error} You can still use the form above.
         </p>
       )}
     </div>
